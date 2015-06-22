@@ -1,0 +1,124 @@
+import java.io.*;
+import java.util.regex.*;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.jmeter.util.JMeterUtils;      // http://jakarta.apache.org/jmeter/api/org/apache/jmeter/util/JMeterUtils.html
+import org.apache.jmeter.threads.JMeterContext; // http://jakarta.apache.org/jmeter/api/org/apache/jmeter/threads/JMeterContext.html
+import org.apache.jmeter.samplers.SampleResult; // http://jakarta.apache.org/jmeter/api/org/apache/jmeter/samplers/SampleResult.html
+
+MoodleResult(JMeterContext ctx) {
+
+    Integer thread = ctx.getThreadNum();
+    SampleResult result = ctx.getPreviousResult();
+    Integer defaultFlag = Pattern.UNIX_LINES | Pattern.DOTALL;
+
+    Integer dbreads = 0;
+    Integer dbwrites = 0;
+    String dbquerytime = "0";
+    String memoryused = "0";
+    String filesincluded = "0";
+    String serverload = "0";
+    String sessionsize = "0";
+    String timeused = "0";
+
+    parsePerformanceinfo(String html) {
+        Pattern pdbreads = Pattern.compile("DB reads/writes: (\\d+)/(\\d+)<", defaultFlag);
+        Matcher mdbreads = pdbreads.matcher(html);
+        if (mdbreads.find()) {
+            dbreads = Integer.parseInt(mdbreads.group(1));
+            dwrites = Integer.parseInt(mdbreads.group(2));
+        }
+
+        // Adding logs if required.
+        if (props.get("includelogs") != null) {
+            Pattern plogwrites = Pattern.compile("Log DB writes (\\d+)", defaultFlag);
+            Matcher mlogwrites = plogwrites.matcher(html);
+            if (mlogwrites.find()) {
+                dbwrites = dbwrites + Integer.parseInt(mlogwrites.group(1));
+            }
+        }
+
+        Pattern pdbquerytime = Pattern.compile("DB queries time: ([\\d.]+) secs", defaultFlag);
+        Matcher mdbquerytime = pdbquerytime.matcher(html);
+        if (mdbquerytime.find()) {
+            dbquerytime = mdbquerytime.group(1);
+        }
+
+        Pattern pmemoryused = Pattern.compile(">RAM: ([0-9\\.]+)M.<", defaultFlag);
+        Matcher mmemoryused = pmemoryused.matcher(html);
+        if (mmemoryused.find()) {
+            memoryused = mmemoryused.group(1);
+        }
+
+        Pattern pfilesincluded = Pattern.compile("Included (\\d+) files", defaultFlag);
+        Matcher mfilesincluded = pfilesincluded.matcher(html);
+        if (mfilesincluded.find()) {
+            filesincluded = mfilesincluded.group(1);
+        }
+
+        Pattern pserverload = Pattern.compile("Load average: ([\\d.]+)<", defaultFlag);
+        Matcher mserverload = pserverload.matcher(html);
+        if (mserverload.find()) {
+            serverload = mserverload.group(1);
+        }
+
+        Pattern psessionsize = Pattern.compile("Session[^:]*: (\\d+(\\.\\d+)?[A-Z]{2})", defaultFlag);
+        Matcher msessionsize = psessionsize.matcher(html);
+        if (msessionsize.find()) {
+            sessionsize = msessionsize.group(1);
+        }
+
+        Pattern ptimeused = Pattern.compile("\"timeused\">([\\d.]+) secs", defaultFlag);
+        Matcher mtimeused = ptimeused.matcher(html);
+        if (mtimeused.find()) {
+            timeused = mtimeused.group(1);
+        }
+    }
+
+    headerToString() {
+        String str = "status | thread | ";
+        str += StringUtils.rightPad("user", 10) + " | ";
+        //str += StringUtils.rightPad("name", 30) + " | ";
+        str += "db-r | db-w | ";
+        str += StringUtils.rightPad("dbquerytime", 8) + " | ";
+        str += StringUtils.rightPad("memory", 8) + " | ";
+        str += StringUtils.rightPad("files", 6) + " | ";
+        str += StringUtils.rightPad("srv ld", 6) + " |";
+        str += StringUtils.rightPad("time", 8) + " | ";
+        str += StringUtils.rightPad("latency", 8) + " | ";
+        return str;
+    }
+
+    toString() {
+        String str = StringUtils.rightPad(result.getResponseCode(), 4) + " | ";
+        str += StringUtils.leftPad(Integer.toString(thread), 6) + " | ";
+        str += StringUtils.rightPad(vars.get("username"), 10) + " | ";
+        str += StringUtils.leftPad(Integer.toString(dbreads), 4) + " | ";
+        str += StringUtils.leftPad(Integer.toString(dbwrites), 4) + " | ";
+        str += StringUtils.leftPad(dbquerytime, 8) + " | ";
+        str += StringUtils.leftPad(memoryused, 8) + " | ";
+        str += StringUtils.leftPad(filesincluded, 6) + " | ";
+        str += StringUtils.leftPad(serverload, 6) + " | ";
+        str += StringUtils.leftPad(String.valueOf(result.getTime()), 8) + " | ";
+        str += StringUtils.leftPad(String.valueOf(result.getLatency()), 8) + " | ";
+        str += result.getURL().getPath();
+        return str;
+    }
+
+    String rawText = result.getResponseDataAsString();
+    Matcher mperformanceinfo = Pattern.compile("<div [^>]+\\bperformanceinfo\\b[^>]+>(.+)").matcher(rawText);
+    if (mperformanceinfo.find()) {
+        parsePerformanceinfo(mperformanceinfo.group(1));
+    } else {
+        print("This page misses the performanceinfo footer: "+result.getUrlAsString()+"\n");
+    }
+
+    return this;
+}
+
+EscapeQuotes(String text) {
+    return text.replace("'", "\\'");
+}
+
+Runnable mr = MoodleResult(ctx);
+
+print(mr.toString());
