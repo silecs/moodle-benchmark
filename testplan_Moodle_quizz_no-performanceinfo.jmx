@@ -54,7 +54,7 @@
     <hashTree>
       <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Samples per minute" enabled="true">
         <intProp name="calcMode">0</intProp>
-        <stringProp name="throughput">${__property(throughput,throughput,120.0)}</stringProp>
+        <stringProp name="throughput">${__property(throughput,throughput,10.0)}</stringProp>
       </ConstantThroughputTimer>
       <hashTree/>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Warm-up site" enabled="true">
@@ -258,7 +258,7 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">${__property(loops,loops,5)}</stringProp>
+          <stringProp name="LoopController.loops">${__property(loops,loops,1)}</stringProp>
         </elementProp>
         <stringProp name="ThreadGroup.num_threads">${__property(users,users,10)}</stringProp>
         <stringProp name="ThreadGroup.ramp_time">${__property(rampup,rampup,1)}</stringProp>
@@ -598,7 +598,7 @@
               <stringProp name="LoopController.loops">${__property(quizanswers,quizanswers,1)}</stringProp>
             </LoopController>
             <hashTree>
-              <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Attempt" enabled="true">
+              <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Attempt : new page" enabled="true">
                 <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Argument List" enabled="true">
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="attempt" elementType="HTTPArgument">
@@ -652,7 +652,7 @@
                 </RegexExtractor>
                 <hashTree/>
               </hashTree>
-              <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Submit the quiz attempt" enabled="true">
+              <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Submit this page" enabled="true">
                 <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="Argument List" enabled="true">
                   <collectionProp name="Arguments.arguments">
                     <elementProp name="sesskey" elementType="HTTPArgument">
